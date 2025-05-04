@@ -1,0 +1,610 @@
+"use client"
+
+import { useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+
+// Simplified angle sections database
+const angleSections = [
+  { designation: "L12X12X1-3/8", area: 31.1, weight: 105, thickness: 1.38, rz: 2.3 },
+  { designation: "L12X12X1-1/4", area: 28.4, weight: 96.4, thickness: 1.25, rz: 2.31 },
+  { designation: "L12X12X1-1/8", area: 25.8, weight: 87.2, thickness: 1.13, rz: 2.33 },
+  { designation: "L12X12X1", area: 23, weight: 77.8, thickness: 1, rz: 2.34 },
+  { designation: "L10X10X1-3/8", area: 25.6, weight: 87.1, thickness: 1.38, rz: 1.91 },
+  { designation: "L10X10X1-1/4", area: 23.4, weight: 79.9, thickness: 1.25, rz: 1.91 },
+  { designation: "L10X10X1-1/8", area: 21.3, weight: 72.3, thickness: 1.13, rz: 1.92 },
+  { designation: "L10X10X1", area: 19, weight: 64.7, thickness: 1, rz: 1.92 },
+  { designation: "L10X10X7/8", area: 16.8, weight: 56.9, thickness: 0.875, rz: 1.93 },
+  { designation: "L10X10X3/4", area: 14.5, weight: 49.1, thickness: 0.75, rz: 1.96 },
+  { designation: "L8X8X1-1/8", area: 16.8, weight: 56.9, thickness: 1.13, rz: 1.56 },
+  { designation: "L8X8X1", area: 15.1, weight: 51, thickness: 1, rz: 1.56 },
+  { designation: "L8X8X7/8", area: 13.3, weight: 45, thickness: 0.875, rz: 1.57 },
+  { designation: "L8X8X3/4", area: 11.5, weight: 38.9, thickness: 0.75, rz: 1.57 },
+  { designation: "L8X8X5/8", area: 9.69, weight: 32.7, thickness: 0.625, rz: 1.58 },
+  { designation: "L8X8X9/16", area: 8.77, weight: 29.6, thickness: 0.563, rz: 1.58 },
+  { designation: "L8X8X1/2", area: 7.84, weight: 26.4, thickness: 0.5, rz: 1.59 },
+  { designation: "L8X6X1", area: 13.1, weight: 44.2, thickness: 1, rz: 1.28 },
+  { designation: "L8X6X7/8", area: 11.5, weight: 39.1, thickness: 0.875, rz: 1.28 },
+  { designation: "L8X6X3/4", area: 9.99, weight: 33.8, thickness: 0.75, rz: 1.29 },
+  { designation: "L8X6X5/8", area: 8.41, weight: 28.5, thickness: 0.625, rz: 1.29 },
+  { designation: "L8X6X9/16", area: 7.61, weight: 25.7, thickness: 0.563, rz: 1.3 },
+  { designation: "L8X6X1/2", area: 6.8, weight: 23, thickness: 0.5, rz: 1.3 },
+  { designation: "L8X6X7/16", area: 5.99, weight: 20.2, thickness: 0.438, rz: 1.31 },
+  { designation: "L8X4X1", area: 11.1, weight: 37.4, thickness: 1, rz: 0.844 },
+  { designation: "L8X4X7/8", area: 9.79, weight: 33.1, thickness: 0.875, rz: 0.846 },
+  { designation: "L8X4X3/4", area: 8.49, weight: 28.7, thickness: 0.75, rz: 0.85 },
+  { designation: "L8X4X5/8", area: 7.16, weight: 24.2, thickness: 0.625, rz: 0.856 },
+  { designation: "L8X4X9/16", area: 6.49, weight: 21.9, thickness: 0.563, rz: 0.859 },
+  { designation: "L8X4X1/2", area: 5.8, weight: 19.6, thickness: 0.5, rz: 0.863 },
+  { designation: "L8X4X7/16", area: 5.11, weight: 17.2, thickness: 0.438, rz: 0.867 },
+  { designation: "L7X4X3/4", area: 7.74, weight: 26.2, thickness: 0.75, rz: 0.855 },
+  { designation: "L7X4X5/8", area: 6.5, weight: 22.1, thickness: 0.625, rz: 0.86 },
+  { designation: "L7X4X1/2", area: 5.26, weight: 17.9, thickness: 0.5, rz: 0.866 },
+  { designation: "L7X4X7/16", area: 4.63, weight: 15.7, thickness: 0.438, rz: 0.869 },
+  { designation: "L7X4X3/8", area: 4, weight: 13.6, thickness: 0.375, rz: 0.873 },
+  { designation: "L6X6X1", area: 11, weight: 37.4, thickness: 1, rz: 1.17 },
+  { designation: "L6X6X7/8", area: 9.75, weight: 33.1, thickness: 0.875, rz: 1.17 },
+  { designation: "L6X6X3/4", area: 8.46, weight: 28.7, thickness: 0.75, rz: 1.17 },
+  { designation: "L6X6X5/8", area: 7.13, weight: 24.2, thickness: 0.625, rz: 1.17 },
+  { designation: "L6X6X9/16", area: 6.45, weight: 21.9, thickness: 0.563, rz: 1.18 },
+  { designation: "L6X6X1/2", area: 5.77, weight: 19.6, thickness: 0.5, rz: 1.18 },
+  { designation: "L6X6X7/16", area: 5.08, weight: 17.2, thickness: 0.438, rz: 1.18 },
+  { designation: "L6X6X3/8", area: 4.38, weight: 14.9, thickness: 0.375, rz: 1.19 },
+  { designation: "L6X6X5/16", area: 3.67, weight: 12.4, thickness: 0.313, rz: 1.19 },
+  { designation: "L6X4X7/8", area: 8, weight: 27.2, thickness: 0.875, rz: 0.854 },
+  { designation: "L6X4X3/4", area: 6.94, weight: 23.6, thickness: 0.75, rz: 0.856 },
+  { designation: "L6X4X5/8", area: 5.86, weight: 20, thickness: 0.625, rz: 0.859 },
+  { designation: "L6X4X9/16", area: 5.31, weight: 18.1, thickness: 0.563, rz: 0.861 },
+  { designation: "L6X4X1/2", area: 4.75, weight: 16.2, thickness: 0.5, rz: 0.864 },
+  { designation: "L6X4X7/16", area: 4.18, weight: 14.3, thickness: 0.438, rz: 0.867 },
+  { designation: "L6X4X3/8", area: 3.61, weight: 12.3, thickness: 0.375, rz: 0.87 },
+  { designation: "L6X4X5/16", area: 3.03, weight: 10.3, thickness: 0.313, rz: 0.874 },
+  { designation: "L6X3-1/2X1/2", area: 4.5, weight: 15.3, thickness: 0.5, rz: 0.756 },
+  { designation: "L6X3-1/2X3/8", area: 3.44, weight: 11.7, thickness: 0.375, rz: 0.763 },
+  { designation: "L6X3-1/2X5/16", area: 2.89, weight: 9.8, thickness: 0.313, rz: 0.767 },
+  { designation: "L5X5X7/8", area: 8, weight: 27.2, thickness: 0.875, rz: 0.971 },
+  { designation: "L5X5X3/4", area: 6.98, weight: 23.6, thickness: 0.75, rz: 0.972 },
+  { designation: "L5X5X5/8", area: 5.9, weight: 20, thickness: 0.625, rz: 0.975 },
+  { designation: "L5X5X1/2", area: 4.79, weight: 16.2, thickness: 0.5, rz: 0.98 },
+  { designation: "L5X5X7/16", area: 4.22, weight: 14.3, thickness: 0.438, rz: 0.983 },
+  { designation: "L5X5X3/8", area: 3.65, weight: 12.3, thickness: 0.375, rz: 0.986 },
+  { designation: "L5X5X5/16", area: 3.07, weight: 10.3, thickness: 0.313, rz: 0.99 },
+  { designation: "L5X3-1/2X3/4", area: 5.85, weight: 19.8, thickness: 0.75, rz: 0.744 },
+  { designation: "L5X3-1/2X5/8", area: 4.93, weight: 16.8, thickness: 0.625, rz: 0.746 },
+  { designation: "L5X3-1/2X1/2", area: 4, weight: 13.6, thickness: 0.5, rz: 0.75 },
+  { designation: "L5X3-1/2X3/8", area: 3.05, weight: 10.4, thickness: 0.375, rz: 0.755 },
+  { designation: "L5X3-1/2X5/16", area: 2.56, weight: 8.7, thickness: 0.313, rz: 0.758 },
+  { designation: "L5X3-1/2X1/4", area: 2.07, weight: 7, thickness: 0.25, rz: 0.761 },
+  { designation: "L5X3X1/2", area: 3.75, weight: 12.8, thickness: 0.5, rz: 0.642 },
+  { designation: "L5X3X7/16", area: 3.31, weight: 11.3, thickness: 0.438, rz: 0.644 },
+  { designation: "L5X3X3/8", area: 2.86, weight: 9.8, thickness: 0.375, rz: 0.646 },
+  { designation: "L5X3X5/16", area: 2.41, weight: 8.2, thickness: 0.313, rz: 0.649 },
+  { designation: "L5X3X1/4", area: 1.94, weight: 6.6, thickness: 0.25, rz: 0.652 },
+  { designation: "L4X4X3/4", area: 5.44, weight: 18.5, thickness: 0.75, rz: 0.774 },
+  { designation: "L4X4X5/8", area: 4.61, weight: 15.7, thickness: 0.625, rz: 0.774 },
+  { designation: "L4X4X1/2", area: 3.75, weight: 12.8, thickness: 0.5, rz: 0.776 },
+  { designation: "L4X4X7/16", area: 3.3, weight: 11.3, thickness: 0.438, rz: 0.777 },
+  { designation: "L4X4X3/8", area: 2.86, weight: 9.8, thickness: 0.375, rz: 0.779 },
+  { designation: "L4X4X5/16", area: 2.4, weight: 8.2, thickness: 0.313, rz: 0.781 },
+  { designation: "L4X4X1/4", area: 1.93, weight: 6.6, thickness: 0.25, rz: 0.783 },
+  { designation: "L4X3-1/2X1/2", area: 3.5, weight: 11.9, thickness: 0.5, rz: 0.716 },
+  { designation: "L4X3-1/2X3/8", area: 2.68, weight: 9.1, thickness: 0.375, rz: 0.719 },
+  { designation: "L4X3-1/2X5/16", area: 2.25, weight: 7.7, thickness: 0.313, rz: 0.721 },
+  { designation: "L4X3-1/2X1/4", area: 1.82, weight: 6.2, thickness: 0.25, rz: 0.723 },
+  { designation: "L4X3X5/8", area: 3.99, weight: 13.6, thickness: 0.625, rz: 0.631 },
+  { designation: "L4X3X1/2", area: 3.25, weight: 11.1, thickness: 0.5, rz: 0.633 },
+  { designation: "L4X3X3/8", area: 2.49, weight: 8.5, thickness: 0.375, rz: 0.636 },
+  { designation: "L4X3X5/16", area: 2.09, weight: 7.2, thickness: 0.313, rz: 0.638 },
+  { designation: "L4X3X1/4", area: 1.69, weight: 5.8, thickness: 0.25, rz: 0.639 },
+  { designation: "L3-1/2X3-1/2X1/2", area: 3.25, weight: 11.1, thickness: 0.5, rz: 0.679 },
+  { designation: "L3-1/2X3-1/2X7/16", area: 2.89, weight: 9.8, thickness: 0.438, rz: 0.681 },
+  { designation: "L3-1/2X3-1/2X3/8", area: 2.5, weight: 8.5, thickness: 0.375, rz: 0.683 },
+  { designation: "L3-1/2X3-1/2X5/16", area: 2.1, weight: 7.2, thickness: 0.313, rz: 0.685 },
+  { designation: "L3-1/2X3-1/2X1/4", area: 1.7, weight: 5.8, thickness: 0.25, rz: 0.688 },
+  { designation: "L3-1/2X3X1/2", area: 3.02, weight: 10.2, thickness: 0.5, rz: 0.618 },
+  { designation: "L3-1/2X3X7/16", area: 2.67, weight: 9.1, thickness: 0.438, rz: 0.62 },
+  { designation: "L3-1/2X3X3/8", area: 2.32, weight: 7.9, thickness: 0.375, rz: 0.622 },
+  { designation: "L3-1/2X3X5/16", area: 1.95, weight: 6.6, thickness: 0.313, rz: 0.624 },
+  { designation: "L3-1/2X3X1/4", area: 1.58, weight: 5.4, thickness: 0.25, rz: 0.628 },
+  { designation: "L3-1/2X2-1/2X1/2", area: 2.77, weight: 9.4, thickness: 0.5, rz: 0.532 },
+  { designation: "L3-1/2X2-1/2X3/8", area: 2.12, weight: 7.2, thickness: 0.375, rz: 0.535 },
+  { designation: "L3-1/2X2-1/2X5/16", area: 1.79, weight: 6.1, thickness: 0.313, rz: 0.538 },
+  { designation: "L3-1/2X2-1/2X1/4", area: 1.45, weight: 4.9, thickness: 0.25, rz: 0.541 },
+  { designation: "L3X3X1/2", area: 2.76, weight: 9.4, thickness: 0.5, rz: 0.58 },
+  { designation: "L3X3X7/16", area: 2.43, weight: 8.3, thickness: 0.438, rz: 0.58 },
+  { designation: "L3X3X3/8", area: 2.11, weight: 7.2, thickness: 0.375, rz: 0.581 },
+  { designation: "L3X3X5/16", area: 1.78, weight: 6.1, thickness: 0.313, rz: 0.583 },
+  { designation: "L3X3X1/4", area: 1.44, weight: 4.9, thickness: 0.25, rz: 0.585 },
+  { designation: "L3X3X3/16", area: 1.09, weight: 3.71, thickness: 0.188, rz: 0.586 },
+  { designation: "L3X2-1/2X1/2", area: 2.5, weight: 8.5, thickness: 0.5, rz: 0.516 },
+  { designation: "L3X2-1/2X7/16", area: 2.22, weight: 7.6, thickness: 0.438, rz: 0.516 },
+  { designation: "L3X2-1/2X3/8", area: 1.93, weight: 6.6, thickness: 0.375, rz: 0.517 },
+  { designation: "L3X2-1/2X5/16", area: 1.63, weight: 5.6, thickness: 0.313, rz: 0.518 },
+  { designation: "L3X2-1/2X1/4", area: 1.32, weight: 4.5, thickness: 0.25, rz: 0.52 },
+  { designation: "L3X2-1/2X3/16", area: 1, weight: 3.39, thickness: 0.188, rz: 0.521 },
+  { designation: "L3X2X1/2", area: 2.26, weight: 7.7, thickness: 0.5, rz: 0.425 },
+  { designation: "L3X2X3/8", area: 1.75, weight: 5.9, thickness: 0.375, rz: 0.426 },
+  { designation: "L3X2X5/16", area: 1.48, weight: 5, thickness: 0.313, rz: 0.428 },
+  { designation: "L3X2X1/4", area: 1.2, weight: 4.1, thickness: 0.25, rz: 0.431 },
+  { designation: "L3X2X3/16", area: 0.917, weight: 3.07, thickness: 0.188, rz: 0.435 },
+  { designation: "L2-1/2X2-1/2X1/2", area: 2.26, weight: 7.7, thickness: 0.5, rz: 0.481 },
+  { designation: "L2-1/2X2-1/2X3/8", area: 1.73, weight: 5.9, thickness: 0.375, rz: 0.481 },
+  { designation: "L2-1/2X2-1/2X5/16", area: 1.46, weight: 5, thickness: 0.313, rz: 0.481 },
+  { designation: "L2-1/2X2-1/2X1/4", area: 1.19, weight: 4.1, thickness: 0.25, rz: 0.482 },
+  { designation: "L2-1/2X2-1/2X3/16", area: 0.901, weight: 3.07, thickness: 0.188, rz: 0.482 },
+  { designation: "L2-1/2X2X3/8", area: 1.55, weight: 5.3, thickness: 0.375, rz: 0.419 },
+  { designation: "L2-1/2X2X5/16", area: 1.32, weight: 4.5, thickness: 0.313, rz: 0.42 },
+  { designation: "L2-1/2X2X1/4", area: 1.07, weight: 3.62, thickness: 0.25, rz: 0.423 },
+  { designation: "L2-1/2X2X3/16", area: 0.818, weight: 2.75, thickness: 0.188, rz: 0.426 },
+  { designation: "L2-1/2X1-1/2X1/4", area: 0.947, weight: 3.19, thickness: 0.25, rz: 0.321 },
+  { designation: "L2-1/2X1-1/2X3/16", area: 0.724, weight: 2.44, thickness: 0.188, rz: 0.324 },
+  { designation: "L2X2X3/8", area: 1.37, weight: 4.7, thickness: 0.375, rz: 0.386 },
+  { designation: "L2X2X5/16", area: 1.16, weight: 3.92, thickness: 0.313, rz: 0.386 },
+  { designation: "L2X2X1/4", area: 0.944, weight: 3.19, thickness: 0.25, rz: 0.387 },
+  { designation: "L2X2X3/16", area: 0.722, weight: 2.44, thickness: 0.188, rz: 0.389 },
+  { designation: "L2X2X1/8", area: 0.491, weight: 1.65, thickness: 0.125, rz: 0.391 },
+]
+
+// Steel properties
+const steelProperties = {
+  A36: { Fy: 36, Fu: 58, description: "Carbon Steel (A36)" },
+  "A572-50": { Fy: 50, Fu: 65, description: "High-Strength Low-Alloy Steel (A572 Gr. 50)" },
+  A992: { Fy: 50, Fu: 65, description: "Structural Steel for Shapes (A992)" },
+}
+
+export default function Home() {
+  const [inputs, setInputs] = useState({
+    deadLoad: 10,
+    liveLoad: 15,
+    steelType: "A36",
+    length: 120,
+    designMethod: "LRFD",
+    numberOfBolts: 4,
+    boltDiameter: 0.75,
+    shearLagCase: "case1",
+  })
+
+  const [results, setResults] = useState(null)
+  const [selectedSection, setSelectedSection] = useState(null)
+
+  const handleInputChange = (name, value) => {
+    setInputs((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const calculateShearLagFactor = () => {
+    switch (inputs.shearLagCase) {
+      case "case1":
+        return 1.0
+      case "case8":
+        return inputs.boltsPerLine === "fourOrMore" ? 0.8 : 0.6
+      default:
+        return 1.0
+    }
+  }
+
+  const handleCalculate = () => {
+    // Get steel properties
+    const steel = steelProperties[inputs.steelType]
+    const Fy = steel.Fy
+    const Fu = steel.Fu
+
+    // Calculate hole diameter
+    const holeSize = Number.parseFloat(inputs.boltDiameter) + 0.125
+
+    // Calculate ultimate and service loads
+    let ultimateLoad = 0
+    let serviceLoad = 0
+
+    if (inputs.designMethod === "LRFD") {
+      const load1 = 1.2 * Number.parseFloat(inputs.deadLoad) + 1.6 * Number.parseFloat(inputs.liveLoad)
+      const load2 = 1.4 * Number.parseFloat(inputs.deadLoad)
+      ultimateLoad = Math.max(load1, load2)
+      serviceLoad = Number.parseFloat(inputs.deadLoad) + Number.parseFloat(inputs.liveLoad)
+    } else {
+      serviceLoad = Number.parseFloat(inputs.deadLoad) + Number.parseFloat(inputs.liveLoad)
+    }
+
+    // Calculate shear lag factor
+    const U = calculateShearLagFactor()
+
+    // Calculate required gross area
+    let AgYielding = 0
+    let AnFracture = 0
+    let AgFracture = 0
+
+    if (inputs.designMethod === "LRFD") {
+      AgYielding = ultimateLoad / (0.9 * Fy)
+      AnFracture = ultimateLoad / (0.75 * Fu * U)
+    } else {
+      AgYielding = (1.67 * serviceLoad) / Fy
+      AnFracture = (2.0 * serviceLoad) / (Fu * U)
+    }
+
+    AgFracture = AnFracture / 0.85
+
+    // Determine governing Ag
+    const requiredAg = Math.max(AgYielding, AgFracture)
+
+    // Calculate minimum radius of gyration
+    const rMin = Number.parseFloat(inputs.length) / 300
+
+    // Find suitable sections
+    const suitableSections = angleSections.filter((section) => {
+      // Check if section meets minimum radius of gyration
+      if (section.rz < rMin) return false
+
+      // Check if section has sufficient gross area
+      if (section.area < requiredAg) return false
+
+      // Check if section meets the third criteria (An + n*dh*t)
+      const effectiveArea = AnFracture + Number.parseFloat(inputs.numberOfBolts) * holeSize * section.thickness
+      if (section.area < effectiveArea) return false
+
+      return true
+    })
+
+    // Sort by weight to find most economical
+    const sortedSections = [...suitableSections].sort((a, b) => a.weight - b.weight)
+
+    const calculationResults = {
+      holeSize,
+      ultimateLoad,
+      serviceLoad,
+      U,
+      AgYielding,
+      AnFracture,
+      AgFracture,
+      requiredAg,
+      rMin,
+      suitableSections: sortedSections,
+    }
+
+    setResults(calculationResults)
+
+    if (sortedSections.length > 0) {
+      setSelectedSection(sortedSections[0])
+    } else {
+      setSelectedSection(null)
+    }
+  }
+
+  return (
+    <main className="container mx-auto py-8 px-4">
+      <div className="flex flex-col items-center space-y-6 text-center">
+        <h1 className="text-3xl font-bold tracking-tight">Steel Tension Member Design Calculator</h1>
+        <p className="text-muted-foreground max-w-[700px]">
+          Design and analyze steel tension members according to AISC specifications using either ASD or LRFD methods.
+        </p>
+      </div>
+
+      <div className="mt-8 grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Input Parameters</CardTitle>
+            <CardDescription>Enter the design parameters for your tension member</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Loading Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="deadLoad">Dead Load (DL) [kips]</Label>
+                    <Input
+                      id="deadLoad"
+                      type="number"
+                      step="0.1"
+                      value={inputs.deadLoad}
+                      onChange={(e) => handleInputChange("deadLoad", e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="liveLoad">Live Load (LL) [kips]</Label>
+                    <Input
+                      id="liveLoad"
+                      type="number"
+                      step="0.1"
+                      value={inputs.liveLoad}
+                      onChange={(e) => handleInputChange("liveLoad", e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Material & Geometry</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="steelType">Steel Type</Label>
+                    <Select value={inputs.steelType} onValueChange={(value) => handleInputChange("steelType", value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select steel type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(steelProperties).map(([key, value]) => (
+                          <SelectItem key={key} value={key}>
+                            {value.description} (Fy={value.Fy} ksi, Fu={value.Fu} ksi)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="length">Total Length (L) [in]</Label>
+                    <Input
+                      id="length"
+                      type="number"
+                      step="0.1"
+                      value={inputs.length}
+                      onChange={(e) => handleInputChange("length", e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Design Method</h3>
+                <RadioGroup
+                  value={inputs.designMethod}
+                  onValueChange={(value) => handleInputChange("designMethod", value)}
+                  className="flex space-x-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="ASD" id="asd" />
+                    <Label htmlFor="asd">Allowable Stress Design (ASD)</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="LRFD" id="lrfd" />
+                    <Label htmlFor="lrfd">Load and Resistance Factor Design (LRFD)</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Connection Details</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="numberOfBolts">Number of Bolts (n)</Label>
+                    <Input
+                      id="numberOfBolts"
+                      type="number"
+                      value={inputs.numberOfBolts}
+                      onChange={(e) => handleInputChange("numberOfBolts", e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="boltDiameter">Bolt Diameter (d) [in]</Label>
+                    <Input
+                      id="boltDiameter"
+                      type="number"
+                      step="0.125"
+                      value={inputs.boltDiameter}
+                      onChange={(e) => handleInputChange("boltDiameter", e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">Standard sizes: 0.5, 0.625, 0.75, 0.875, 1.0</p>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Shear Lag Factor</h3>
+                <div className="space-y-2">
+                  <Label htmlFor="shearLagCase">Shear Lag Case</Label>
+                  <Select
+                    value={inputs.shearLagCase}
+                    onValueChange={(value) => handleInputChange("shearLagCase", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select case" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="case1">Case 1: All elements connected (U = 1.0)</SelectItem>
+                      <SelectItem value="case8">Case 8: Single angle member</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {inputs.shearLagCase === "case8" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="boltsPerLine">Bolts per line in direction of loading</Label>
+                    <Select
+                      value={inputs.boltsPerLine}
+                      onValueChange={(value) => handleInputChange("boltsPerLine", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select number of bolts" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="three">Three bolts per line (U = 0.6)</SelectItem>
+                        <SelectItem value="fourOrMore">Four or more bolts per line (U = 0.8)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+
+              <Button onClick={handleCalculate} className="w-full">
+                Calculate Design
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Design Results</CardTitle>
+            <CardDescription>Calculation results and section selection</CardDescription>
+          </CardHeader>
+          <CardContent className="h-[600px] overflow-auto">
+            {!results ? (
+              <div className="flex h-full items-center justify-center">
+                <p className="text-muted-foreground">Enter parameters and click Calculate to see results</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Load Calculations</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 border rounded-md">
+                      <p className="text-sm font-medium">Design Method</p>
+                      <p className="text-lg">{inputs.designMethod}</p>
+                    </div>
+                    {inputs.designMethod === "LRFD" ? (
+                      <div className="p-3 border rounded-md">
+                        <p className="text-sm font-medium">Ultimate Load (Tu)</p>
+                        <p className="text-lg">{results.ultimateLoad.toFixed(2)} kips</p>
+                      </div>
+                    ) : (
+                      <div className="p-3 border rounded-md">
+                        <p className="text-sm font-medium">Service Load (Ta)</p>
+                        <p className="text-lg">{results.serviceLoad.toFixed(2)} kips</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Connection Details</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 border rounded-md">
+                      <p className="text-sm font-medium">Bolt Diameter</p>
+                      <p className="text-lg">{inputs.boltDiameter} in</p>
+                    </div>
+                    <div className="p-3 border rounded-md">
+                      <p className="text-sm font-medium">Hole Diameter</p>
+                      <p className="text-lg">{results.holeSize.toFixed(3)} in</p>
+                    </div>
+                    <div className="p-3 border rounded-md">
+                      <p className="text-sm font-medium">Number of Bolts</p>
+                      <p className="text-lg">{inputs.numberOfBolts}</p>
+                    </div>
+                    <div className="p-3 border rounded-md">
+                      <p className="text-sm font-medium">Shear Lag Factor (U)</p>
+                      <p className="text-lg">{results.U.toFixed(2)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Required Areas</h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="p-3 border rounded-md">
+                      <p className="text-sm font-medium">Required Ag (Yielding)</p>
+                      <p className="text-lg">{results.AgYielding.toFixed(3)} in²</p>
+                    </div>
+                    <div className="p-3 border rounded-md">
+                      <p className="text-sm font-medium">Required An (Fracture)</p>
+                      <p className="text-lg">{results.AnFracture.toFixed(3)} in²</p>
+                    </div>
+                    <div className="p-3 border rounded-md">
+                      <p className="text-sm font-medium">Required Ag (Fracture)</p>
+                      <p className="text-lg">{results.AgFracture.toFixed(3)} in²</p>
+                    </div>
+                    <div className="p-3 border rounded-md bg-muted">
+                      <p className="text-sm font-medium">Governing Required Ag</p>
+                      <p className="text-lg font-bold">{results.requiredAg.toFixed(3)} in²</p>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Section Selection Criteria</h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="p-3 border rounded-md">
+                      <p className="text-sm font-medium">Minimum Radius of Gyration</p>
+                      <p className="text-lg">{results.rMin.toFixed(3)} in</p>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Selected Section</h3>
+                  {selectedSection ? (
+                    <div className="p-4 border rounded-md bg-muted">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm font-medium">Section</p>
+                          <p className="text-lg font-bold">{selectedSection.designation}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">Area</p>
+                          <p className="text-lg">{selectedSection.area.toFixed(3)} in²</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">Weight</p>
+                          <p className="text-lg">{selectedSection.weight.toFixed(2)} lb/ft</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">Min. Radius of Gyration</p>
+                          <p className="text-lg">{selectedSection.rz.toFixed(3)} in</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <Alert variant="destructive">
+                      <AlertTitle>No suitable section found</AlertTitle>
+                      <AlertDescription>
+                        No angle section meets all the design criteria. Consider adjusting your parameters.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+
+                {results.suitableSections.length > 1 && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h3 className="text-lg font-medium mb-2">Alternative Sections</h3>
+                      <div className="border rounded-md overflow-hidden">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="bg-muted">
+                              <th className="p-2 text-left">Designation</th>
+                              <th className="p-2 text-left">Area (in²)</th>
+                              <th className="p-2 text-left">Weight (lb/ft)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {results.suitableSections.slice(1).map((section, index) => (
+                              <tr key={index} className="border-t">
+                                <td className="p-2">{section.designation}</td>
+                                <td className="p-2">{section.area.toFixed(3)}</td>
+                                <td className="p-2">{section.weight.toFixed(2)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </main>
+  )
+}
